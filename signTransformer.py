@@ -5,6 +5,8 @@ import torch
 from torch import nn
 from d2l import torch as d2l
 import os
+import time
+from tqdm import tqdm
 
 ############################################################
 # PositionWise Feed-Forward Networks #######################
@@ -64,22 +66,27 @@ class TransformerEncoder_NoEmbedding(d2l.Encoder):
 
     def forward(self, X, valid_lens):
         # Skip embedding if you're using features
+        device = X.device  # Ensure to get the device from X
+        #print("the X's device is :", device)
+
         if self.input_dim is None:
             self.input_dim = X.shape[-1]  # Set input_dim from input tensor
-            self.projection = nn.Linear(self.input_dim, self.num_hiddens)  # Reinitialize projection
+            self.projection = nn.Linear(self.input_dim, self.num_hiddens).to(device)  # Reinitialize projection
 
-        print(f"Input shape: {X.shape}")  # Print input shape
+        #print(f"Input shape: {X.shape}")  # Print input shape
         # print(f"X values before projection: {X}")
-        print(f"X dtype before projection: {X.dtype}")
-        print("num_hiddens: ", self.num_hiddens)
-        print("input_dim: ", self.input_dim)
-        print("ffn_num_hiddens: ", self.ffn_num_hiddens)
+        #print(f"X dtype before projection: {X.dtype}")
+        #print("num_hiddens: ", self.num_hiddens)
+        #print("input_dim: ", self.input_dim)
+        #print("ffn_num_hiddens: ", self.ffn_num_hiddens)
 
         # projection = nn.Linear(self.input_dim, self.num_hiddens)
         X = self.projection(X)  # Project the feature dimension to num_hiddens
-        print(f"Input shape after projection: {X.shape}")  # Print input shape after projection
+        #print("Projection device:", self.projection.weight.device)
+        #print("X device after projection:", X.device)
+        #print(f"Input shape after projection: {X.shape}")  # Print input shape after projection
 
-        X = self.pos_encoding(X * math.sqrt(self.num_hiddens))
+        X = self.pos_encoding(X * math.sqrt(self.num_hiddens)).to(device)
         self.attention_weights = [None] * len(self.blks)
         for i, blk in enumerate(self.blks):
             X = blk(X, valid_lens)
@@ -252,19 +259,19 @@ class signEng(d2l.DataModule):
             array = d2l.tensor([vocab[s] for s in sentences])
 
             # Debug: print array shape
-            print(f"Array shape: {array.shape}")
-            print("Array: ", array)
+            #print(f"Array shape: {array.shape}")
+            #print("Array: ", array)
             valid_len = d2l.reduce_sum( #有效长度（valid_len）表示句子中非 <pad> 元素的数量
                 d2l.astype(array != vocab['<pad>'], d2l.int32), 1)
             return array, vocab, valid_len
 
         # Padding features to the same length
-        print("features: ", features)
+        #print("features: ", features)
         max_len = max(len(f) for f in features)
         src_valid_len = []
-        print("max_len: ", max_len)
+        #print("max_len: ", max_len)
         feature_dim = features[0].size(1)  # Dimension of the feature vectors
-        print("feature_dim: ", feature_dim)
+        #print("feature_dim: ", feature_dim)
         features_padded = []
         for f in features:
             src_valid_len.append(len(f))
@@ -275,8 +282,8 @@ class signEng(d2l.DataModule):
                 padded_feature = f
             features_padded.append(padded_feature)
         features_tensor = torch.stack(features_padded)
-        print("features_tensor.shape: ", features_tensor.shape)
-        print(features_tensor)
+        print("Stacked features_tensor.shape: ", features_tensor.shape)
+        #print(features_tensor)
 
         # print("sentences: ", sentences)
         src, tgt = self._tokenize(self._preprocess(sentences))
@@ -286,12 +293,12 @@ class signEng(d2l.DataModule):
         src_array, src_vocab, src_valid_len = features_tensor, None, src_valid_len_tensor
 
         # 检查是否是相同类型
-        if src_valid_len.dtype == _.dtype:
-            print("Both Tensors have the same data type")
-        else:
-            print("Two Tensors have the different data type")
-            print("src_valid_len.dtype: ", src_valid_len.dtype)
-            print("_.dtype: ", _.dtype)
+        #if src_valid_len.dtype == _.dtype:
+        #    print("Both Tensors have the same data type")
+        #else:
+        #    print("Two Tensors have the different data type")
+        #    print("src_valid_len.dtype: ", src_valid_len.dtype)
+        #    print("_.dtype: ", _.dtype)
 
         return ((src_array, tgt_array[:, :-1], src_valid_len, tgt_array[:, 1:]),
                 src_vocab, tgt_vocab)
@@ -356,17 +363,28 @@ class Trainer(d2l.HyperParameters):
     def fit_epoch(self):
         """Defined in :numref:`sec_linear_scratch`"""
         self.model.train()
-        for batch in self.train_dataloader:
-            loss = self.model.training_step(self.prepare_batch(batch))
-            self.train_losses.append(loss.item())  # 记录训练损失
-            print("loss.item(): ", loss.item())
-            self.optim.zero_grad()
-            with torch.no_grad():
-                loss.backward()
-                if self.gradient_clip_val > 0:  # To be discussed later
-                    self.clip_gradients(self.gradient_clip_val, self.model)
-                self.optim.step()
-            self.train_batch_idx += 1
+        num_batches = len(self.train_dataloader)
+        start_time = time.time()  # 记录开始时间
+        # 使用tqdm显示进度条
+        with tqdm(total=num_batches, desc=f"Epoch [{self.epoch + 1}/{self.max_epochs}]", unit="batch") as pbar:
+            for batch in self.train_dataloader:
+                loss = self.model.training_step(self.prepare_batch(batch))
+                self.train_losses.append(loss.item())  # 记录训练损失
+                print("loss.item(): ", loss.item())
+                self.optim.zero_grad()
+                with torch.no_grad():
+                    loss.backward()
+                    if self.gradient_clip_val > 0:  # To be discussed later
+                        self.clip_gradients(self.gradient_clip_val, self.model)
+                    self.optim.step()
+                torch.cuda.empty_cache()  # Clear cache
+                self.train_batch_idx += 1
+                pbar.update(1)  # 更新进度条
+        
+        # 记录整个epoch的时间
+        epoch_time = time.time() - start_time
+        print(f"Epoch [{self.epoch + 1}/{self.max_epochs}] completed in {epoch_time:.2f} seconds.")
+
         if self.val_dataloader is None:
             return
         self.model.eval()
@@ -374,6 +392,7 @@ class Trainer(d2l.HyperParameters):
             with torch.no_grad():
                 self.model.validation_step(self.prepare_batch(batch))
             self.val_batch_idx += 1
+        torch.cuda.empty_cache()  # Clear cache
 
     def __init__(self, max_epochs, num_gpus=0, gradient_clip_val=0):
         """Defined in :numref:`sec_use_gpu`"""
@@ -387,9 +406,14 @@ class Trainer(d2l.HyperParameters):
         """Defined in :numref:`sec_use_gpu`"""
         if self.gpus:
             batch = [d2l.to(a, self.gpus[0]) for a in batch]
+            # Check if any tensor is not on GPU
+            #for tensor in batch:
+            #    if tensor.is_cuda:
+            #        print(f"Tensor {tensor.shape} is on GPU")
+            #    else:
+            #        print(f"Tensor {tensor.shape} is not on GPU")
         return batch
     
-
     def prepare_model(self, model):
         """Defined in :numref:`sec_use_gpu`"""
         model.trainer = self
@@ -397,6 +421,8 @@ class Trainer(d2l.HyperParameters):
         if self.gpus:
             model.to(self.gpus[0])
         self.model = model
+        #for param in model.parameters():
+        #    print(param.device) # Print the device of each parameter
 
     def clip_gradients(self, grad_clip_val, model):
         """Defined in :numref:`sec_rnn-scratch`"""
@@ -411,10 +437,20 @@ class Trainer(d2l.HyperParameters):
 '''
 Build Model 
 '''
+batch_size = 16
+num_steps = 9
+num_train = 512
+num_val = 128
+#features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
+features_dir = '/home/streetparking/SLR/paddedTrainingVideoFeaturesGPU'
+#features_dir = '/home/streetparking/SLR/trainingVideoFeatures'
+#sentences_file = '/home/streetparking/SLR/germen_sentences.txt'
+sentences_file = '/home/streetparking/SLR/trainingTranslation.txt'
+
 signdata = signEng(batch_size=batch_size, num_steps=num_steps, num_train=num_train, num_val=num_val,
                 features_dir=features_dir, sentences_file=sentences_file)
-num_hiddens, num_blks, dropout = 256, 2, 0.2 # Should Adjust based on the performance
-ffn_num_hiddens, num_heads = 64, 4
+num_hiddens, num_blks, dropout = 512, 6, 0.1 # Should Adjust based on the performance
+ffn_num_hiddens, num_heads = 1024, 4
 encoder = TransformerEncoder_NoEmbedding(
     num_hiddens, ffn_num_hiddens, num_heads,
     num_blks, dropout)
@@ -423,10 +459,87 @@ decoder = TransformerDecoder(
     num_blks, dropout)
 signmodel = d2l.Seq2Seq(encoder, decoder, tgt_pad=signdata.tgt_vocab['<pad>'],
                     lr=0.001)
-# trainer = d2l.Trainer(max_epochs=30, gradient_clip_val=1, num_gpus=1)
+
+if torch.cuda.is_available():
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
+signmodel.to(device)
+#device = next(signmodel.parameters()).device
+print('check device: ', device)
+
+#trainer = d2l.Trainer(max_epochs=20, gradient_clip_val=1, num_gpus=1)
 trainer = Trainer(max_epochs=30, gradient_clip_val=1, num_gpus=1) #Using self-Training which could store loss value
 
+#torch.cuda.empty_cache()
 '''
 Fit the sign data to model
 '''
 trainer.fit(signmodel, signdata)
+
+'''
+Save the model status dictionary
+'''
+#save_path = '/home/streetparking/SLR/savedModel/0904_256_6_02_128_4.pth'
+#save_dir = os.path.dirname(save_path)
+# 格式化保存路径
+save_path = '/home/streetparking/SLR/savedModel/'
+file_name = f'{num_hiddens}_{num_blks}_{dropout}_{ffn_num_hiddens}_{num_heads}.pth'
+full_save_path = os.path.join(save_path, file_name)
+
+# 打印最终的保存路径
+print("Model will be saved to:", full_save_path)
+
+# 检查目录是否存在，如果不存在则创建
+#os.makedirs(full_save_path, exist_ok=True)
+torch.save(signmodel.state_dict(), full_save_path)
+#torch.save(signmodel.state_dict(), '/home/jiayu/ParkVehicle/SLR_back/savedModel')
+
+'''
+Predict
+'''
+#features, sentences = signdata._load_features_and_sentences(features_dir, sentences_file)
+
+#sign1 = features[0]
+#sign2 = features[1]
+#sign3 = features[2]
+#sign4 = features[3]
+#sign5 = features[4]
+
+#signs = [sign1, sign2, sign3, sign4, sign5]
+#engs = ['liebe zuschauer guten abend', 'heftiger wintereinbruch gestern in nordirland schottland', 'schwere überschwemmungen in den usa', 'weiterhin warm am östlichen mittelmeer und auch richtung westliches mittelmeer ganz west und nordeuropa bleibt kühl', 'und sehr kühl wird auch die kommende nacht']
+#preds, _ = signmodel.predict_step(
+    #signdata.build(signs, engs), d2l.cpu(), signdata.num_steps)
+#    signdata.build(signs, engs), d2l.try_gpu(), signdata.num_steps)
+#for sign, eng, p in zip(signs, engs, preds):
+#    translation = []
+#    for token in signdata.tgt_vocab.to_tokens(p):
+#        if token == '<eos>':
+#            break
+#        translation.append(token)
+#    print(f'{sign} => {translation}, bleu,'
+#          f'{d2l.bleu(" ".join(translation), eng, k=2):.3f}')
+
+
+#testsignmodel = d2l.Seq2Seq(encoder, decoder, tgt_pad=signdata.tgt_vocab['<pad>'],
+#                    lr=0.001)
+#testsignmodel.load_state_dict(torch.load(save_path, weights_only=True))
+#testsignmodel.eval()
+
+# 打印模型的部分权重
+#for name, param in testsignmodel.named_parameters():
+#    print(name, param.data)
+
+
+# 预测
+#preds, _ = signmodel.predict_step(
+#    signdata.build(signs, engs), d2l.cpu(), signdata.num_steps)
+#    #signdata.build(signs, engs), d2l.try_gpu(), signdata.num_steps)
+#for sign, eng, p in zip(signs, engs, preds):
+#    translation = []
+#    for token in signdata.tgt_vocab.to_tokens(p):
+#        if token == '<eos>':
+#            break
+#        translation.append(token)
+#    print(f'{sign} => {translation}, bleu,'
+#          f'{d2l.bleu(" ".join(translation), eng, k=2):.3f}')
