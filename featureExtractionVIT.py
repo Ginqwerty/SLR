@@ -87,17 +87,20 @@ def process_subfolders(main_folder_path, save_folder, log_file_path, device='cpu
 if __name__ == '__main__':
     # Path to your main directory containing subfolders
     # main_folder_path = '/home/jiayu/ParkVehicle/SLR_back/PHOENIX-2014-T-release-v3/PHOENIX-2014-T/features/fullFrame-210x260px/train'
-    main_folder_path = '/home/jiayu/ParkVehicle/SLR_back/PHOENIX-2014-T-release-v3/PHOENIX-2014-T/features/fullFrame-210x260px/test'
+    # main_folder_path = '/home/jiayu/ParkVehicle/SLR_back/PHOENIX-2014-T-release-v3/PHOENIX-2014-T/features/fullFrame-210x260px/test'
+    main_folder_path = '/home/streetparking/SLR/PHOENIX-2014-T-release-v3/PHOENIX-2014-T/features/fullFrame-210x260px/dev'
    
     # Specify folder to save the features
     #save_folder = '/home/jiayu/ParkVehicle/SLR_back/trainingVideoFeaturesGPU'
-    save_folder = '/home/jiayu/ParkVehicle/SLR_back/testingVideoFeaturesGPU'
+    #save_folder = '/home/jiayu/ParkVehicle/SLR_back/testingVideoFeaturesGPU'
+    save_folder = '/home/streetparking/SLR/devingVideoFeaturesGPU'
     #save_folder = '/home/jiayu/ParkVehicle/SLR_back/trainingVideoFeatures'
     #save_folder = '/home/jiayu/ParkVehicle/SLR_back/testingVideoFeatures'
 
     # Path to log file where processed folder names will be recorded
     #log_file_path = '/home/jiayu/ParkVehicle/SLR_back/processed_folders_trainingGPU.txt'
-    log_file_path = '/home/jiayu/ParkVehicle/SLR_back/processed_folders_testingGPU.txt'
+    #log_file_path = '/home/jiayu/ParkVehicle/SLR_back/processed_folders_testingGPU.txt'
+    log_file_path = '/home/streetparking/SLR/processed_folders_devingGPU.txt'
     #log_file_path = '/home/jiayu/ParkVehicle/SLR_back/processed_folders.txt'
     #log_file_path = '/home/jiayu/ParkVehicle/SLR_back/processed_folders_testing.txt'
     

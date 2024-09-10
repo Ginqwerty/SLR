@@ -188,7 +188,7 @@ class signEng(d2l.DataModule):
         for file_name in sorted(os.listdir(features_dir)):
             if file_name.endswith('.pt'):
                 feature_path = os.path.join(features_dir, file_name)
-                feature = torch.load(feature_path)
+                feature = torch.load(feature_path, weights_only=True)
                 features.append(feature)
 
         # Load English sentences from text file as a single string
@@ -215,9 +215,9 @@ class signEng(d2l.DataModule):
         src, tgt = [], []
         for i, line in enumerate(text.split('\n')):
             if max_examples and i > max_examples: break
-            # print("line: ", line)
+            #print("line: ", line)
             tgt.append([t for t in f'{line} <eos>'.split(' ') if t])
-            # break
+            #break
         return src, tgt
 
     def __init__(self, batch_size, num_steps=9, num_train=512, num_val=128, features_dir='features', sentences_file='sentences.txt'):
@@ -235,7 +235,7 @@ class signEng(d2l.DataModule):
     def _build_arrays(self, features, sentences, src_vocab=None, tgt_vocab=None):
         """Build arrays from frame features and English sentences."""
         def _build_array(sentences, vocab, is_tgt=False):
-            # print("input sentences: ", sentences)
+            # print("input sentences before padding: ", sentences)
             '''
             # The _build_array function defines an anonymous function of pad_or_trim that takes a sentence seq and the target length t as arguments.
             # If the length of the sentence is greater than t, it will truncate the first t elements of the sentence.
@@ -245,8 +245,8 @@ class signEng(d2l.DataModule):
             pad_or_trim = lambda seq, t: (
                 seq[:t] if len(seq) > t else seq + ['<pad>'] * (t - len(seq)))
             sentences = [pad_or_trim(s, 9) for s in sentences]
-            # print("sentences.shape: ", len(sentences))
-            # print("sentences[1]: ", sentences[1])
+            print("sentences.shape: ", len(sentences))
+            #print("sentences[1]: ", sentences[1])
 
             if is_tgt:
                 sentences = [['<bos>'] + s for s in sentences]
@@ -291,7 +291,7 @@ class signEng(d2l.DataModule):
 
         tgt_array, tgt_vocab, _ = _build_array(tgt, tgt_vocab, True)
         src_array, src_vocab, src_valid_len = features_tensor, None, src_valid_len_tensor
-
+       
         # 检查是否是相同类型
         #if src_valid_len.dtype == _.dtype:
         #    print("Both Tensors have the same data type")
@@ -299,7 +299,10 @@ class signEng(d2l.DataModule):
         #    print("Two Tensors have the different data type")
         #    print("src_valid_len.dtype: ", src_valid_len.dtype)
         #    print("_.dtype: ", _.dtype)
-
+	
+ 	# Check src and tgt arraies have same length
+        print("src_array_length: ", len(src_array))
+        print("tgt_array_length: ", len(tgt_array))
         return ((src_array, tgt_array[:, :-1], src_valid_len, tgt_array[:, 1:]),
                 src_vocab, tgt_vocab)
 
@@ -334,6 +337,9 @@ class Trainer(d2l.HyperParameters):
     def prepare_data(self, data):
         self.train_dataloader = data.train_dataloader()
         self.val_dataloader = data.val_dataloader()
+        # Debugging outputs
+        print(f"Number of training batches: {len(self.train_dataloader)}")
+        print(f"Number of validation batches: {len(self.val_dataloader)}")
         self.num_train_batches = len(self.train_dataloader)
         self.num_val_batches = (len(self.val_dataloader)
                                 if self.val_dataloader is not None else 0)
@@ -370,7 +376,7 @@ class Trainer(d2l.HyperParameters):
             for batch in self.train_dataloader:
                 loss = self.model.training_step(self.prepare_batch(batch))
                 self.train_losses.append(loss.item())  # 记录训练损失
-                print("loss.item(): ", loss.item())
+                #print("training loss.item(): ", loss.item())
                 self.optim.zero_grad()
                 with torch.no_grad():
                     loss.backward()
@@ -432,6 +438,23 @@ class Trainer(d2l.HyperParameters):
             for param in params:
                 param.grad[:] *= grad_clip_val / norm
 
+def load_testing_features_and_sentences(features_dir, sentences_file):
+    """Load frame features from .pt files in a directory and sentences from a text file."""
+    features = []
+
+    # Load frame features from .pt files
+    for file_name in sorted(os.listdir(features_dir)):
+        if file_name.endswith('.pt'):
+            feature_path = os.path.join(features_dir, file_name)
+            feature = torch.load(feature_path, weights_only=True)
+            features.append(feature)
+
+    # Load English sentences from text file as a single string
+    with open(sentences_file, 'r', encoding='utf-8') as f:
+        sentences = f.read().strip().split('\n')  # Read as a single string
+
+    return features, sentences
+
 ############################################################
 # Training Step ############################################
 '''
@@ -439,18 +462,20 @@ Build Model
 '''
 batch_size = 16
 num_steps = 9
-num_train = 512
-num_val = 128
+num_train = 6600
+num_val = 496
 #features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
 features_dir = '/home/streetparking/SLR/paddedTrainingVideoFeaturesGPU'
-#features_dir = '/home/streetparking/SLR/trainingVideoFeatures'
+#features_dir = '/home/streetparking/SLR/paddedTrainAndDevFeaturesGPU'
+
 #sentences_file = '/home/streetparking/SLR/germen_sentences.txt'
 sentences_file = '/home/streetparking/SLR/trainingTranslation.txt'
-
+#sentences_file = '/home/streetparking/SLR/trainDevTranslation.txt'
+ 
 signdata = signEng(batch_size=batch_size, num_steps=num_steps, num_train=num_train, num_val=num_val,
                 features_dir=features_dir, sentences_file=sentences_file)
-num_hiddens, num_blks, dropout = 512, 6, 0.1 # Should Adjust based on the performance
-ffn_num_hiddens, num_heads = 1024, 4
+num_hiddens, num_blks, dropout = 512, 3, 0.2 # Should Adjust based on the performance
+ffn_num_hiddens, num_heads = 2048, 4
 encoder = TransformerEncoder_NoEmbedding(
     num_hiddens, ffn_num_hiddens, num_heads,
     num_blks, dropout)
@@ -469,9 +494,8 @@ signmodel.to(device)
 print('check device: ', device)
 
 #trainer = d2l.Trainer(max_epochs=20, gradient_clip_val=1, num_gpus=1)
-trainer = Trainer(max_epochs=30, gradient_clip_val=1, num_gpus=1) #Using self-Training which could store loss value
+trainer = Trainer(max_epochs=1, gradient_clip_val=1, num_gpus=1) #Using self-Training which could store loss value
 
-#torch.cuda.empty_cache()
 '''
 Fit the sign data to model
 '''
@@ -484,7 +508,7 @@ Save the model status dictionary
 #save_dir = os.path.dirname(save_path)
 # 格式化保存路径
 save_path = '/home/streetparking/SLR/savedModel/'
-file_name = f'{num_hiddens}_{num_blks}_{dropout}_{ffn_num_hiddens}_{num_heads}.pth'
+file_name = f'testing_{num_hiddens}_{num_blks}_{dropout}_{ffn_num_hiddens}_{num_heads}.pth'
 full_save_path = os.path.join(save_path, file_name)
 
 # 打印最终的保存路径
@@ -495,19 +519,29 @@ print("Model will be saved to:", full_save_path)
 torch.save(signmodel.state_dict(), full_save_path)
 #torch.save(signmodel.state_dict(), '/home/jiayu/ParkVehicle/SLR_back/savedModel')
 
+#print(trainer.train_losses)
+torch.cuda.empty_cache()  # Clear cache
 '''
 Predict
 '''
-#features, sentences = signdata._load_features_and_sentences(features_dir, sentences_file)
+#testing_features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
+#testing_translation_file = '/home/streetparking/SLR/germen_sentences.txt'
 
+#testing_features_dir = '/home/streetparking/SLR/paddedTestingVideoFeaturesGPU'
+#testing_translation_file = '/home/streetparking/SLR/testingTranslation.txt'
+
+#features, sentences = signdata._load_features_and_sentences(testing_features_dir, testing_translation_file)
+#print("loaded sentences: ", sentences[0])
 #sign1 = features[0]
 #sign2 = features[1]
 #sign3 = features[2]
 #sign4 = features[3]
 #sign5 = features[4]
-
+#print("sign 1 feature: ", sign1)
 #signs = [sign1, sign2, sign3, sign4, sign5]
+#signs = [features[0], features[1], features[2], features[3], features[4]]
 #engs = ['liebe zuschauer guten abend', 'heftiger wintereinbruch gestern in nordirland schottland', 'schwere überschwemmungen in den usa', 'weiterhin warm am östlichen mittelmeer und auch richtung westliches mittelmeer ganz west und nordeuropa bleibt kühl', 'und sehr kühl wird auch die kommende nacht']
+#engs = [sentences[0], sentences[1], sentences[2], sentences[3], sentences[4]]
 #preds, _ = signmodel.predict_step(
     #signdata.build(signs, engs), d2l.cpu(), signdata.num_steps)
 #    signdata.build(signs, engs), d2l.try_gpu(), signdata.num_steps)
@@ -520,9 +554,9 @@ Predict
 #    print(f'{sign} => {translation}, bleu,'
 #          f'{d2l.bleu(" ".join(translation), eng, k=2):.3f}')
 
-
 #testsignmodel = d2l.Seq2Seq(encoder, decoder, tgt_pad=signdata.tgt_vocab['<pad>'],
 #                    lr=0.001)
+#save_path = '/home/streetparking/SLR/savedModel/0904_256_6_02_128_4.pth'
 #testsignmodel.load_state_dict(torch.load(save_path, weights_only=True))
 #testsignmodel.eval()
 
@@ -532,10 +566,12 @@ Predict
 
 
 # 预测
-#preds, _ = signmodel.predict_step(
-#    signdata.build(signs, engs), d2l.cpu(), signdata.num_steps)
-#    #signdata.build(signs, engs), d2l.try_gpu(), signdata.num_steps)
-#for sign, eng, p in zip(signs, engs, preds):
+#signs = features
+#gers = sentences
+#preds, _ = testsignmodel.predict_step(
+    #signdata.build(signs, engs), d2l.cpu(), signdata.num_steps)
+#    signdata.build(signs, gers), d2l.try_gpu(), signdata.num_steps)
+#for sign, ger, p in zip(signs, gers, preds):
 #    translation = []
 #    for token in signdata.tgt_vocab.to_tokens(p):
 #        if token == '<eos>':
