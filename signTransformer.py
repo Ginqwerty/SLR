@@ -474,7 +474,7 @@ sentences_file = '/home/streetparking/SLR/trainingTranslation.txt'
  
 signdata = signEng(batch_size=batch_size, num_steps=num_steps, num_train=num_train, num_val=num_val,
                 features_dir=features_dir, sentences_file=sentences_file)
-num_hiddens, num_blks, dropout = 512, 3, 0.2 # Should Adjust based on the performance
+num_hiddens, num_blks, dropout = 256, 4, 0.2 # Should Adjust based on the performance
 ffn_num_hiddens, num_heads = 2048, 4
 encoder = TransformerEncoder_NoEmbedding(
     num_hiddens, ffn_num_hiddens, num_heads,
@@ -508,7 +508,7 @@ Save the model status dictionary
 #save_dir = os.path.dirname(save_path)
 # 格式化保存路径
 save_path = '/home/streetparking/SLR/savedModel/'
-file_name = f'testing_{num_hiddens}_{num_blks}_{dropout}_{ffn_num_hiddens}_{num_heads}.pth'
+file_name = f'0910_{num_hiddens}_{num_blks}_{dropout}_{ffn_num_hiddens}_{num_heads}.pth'
 full_save_path = os.path.join(save_path, file_name)
 
 # 打印最终的保存路径
