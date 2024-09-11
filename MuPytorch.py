@@ -903,11 +903,35 @@ class MTFraEng(d2l.DataModule):
                 d2l.astype(array != vocab['<pad>'], d2l.int32), 1)
             return array, vocab, valid_len
         src, tgt = self._tokenize(self._preprocess(raw_text),
-                                  self.num_train + self.num_val)
+                                  self.num_train + self.num_val) 
+                                  #src, tgt sample [['the', 'sun', 'is', 'shining', 'brightly', 'today', '.', '<eos>']]
         src_array, src_vocab, src_valid_len = _build_array(src, src_vocab)
         tgt_array, tgt_vocab, _ = _build_array(tgt, tgt_vocab, True)
         return ((src_array, tgt_array[:,:-1], src_valid_len, tgt_array[:,1:]),
                 src_vocab, tgt_vocab)
+        '''
+        Source (输入): tensor([161,   0,   3,   4,   4,   4,   4,   4,   4])
+            Target Input (目标输入): tensor([[  3,   6,   0,  ...,   5,   5,   5],
+                    [  3, 108, 122,  ...,   2,   4,   5],
+                    [  3, 211,   6,  ...,   5,   5,   5],
+                    ...,
+                    [  3, 142,   0,  ...,   5,   5,   5],
+                    [  3, 108, 183,  ...,   5,   5,   5],
+                    [  3,  18,   0,  ...,   5,   5,   5]])
+            Source Valid Length (输入有效长度): tensor([3, 5, 3, 4, 3, 4, 4, 4, 4, 4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 3,
+                    4, 5, 4, 4, 4, 3, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 5,
+                    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+                    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 4, 4, 3, 3, 4, 5, 4, 4, 4, 4, 4, 5, 4,
+                    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+                    4, 4, 4, 4, 4, 4, 4, 4])
+            Target Output (目标输出): tensor([[  6,   0,   4,  ...,   5,   5,   5],
+                    [108, 122, 183,  ...,   4,   5,   5],
+                    [211,   6,   0,  ...,   5,   5,   5],
+                    ...,
+                    [142,   0,   4,  ...,   5,   5,   5],
+                    [108, 183, 136,  ...,   5,   5,   5],
+                    [ 18,   0,   4,  ...,   5,   5,   5]])
+        '''
 
     def get_dataloader(self, train):
         """Defined in :numref:`subsec_loading-seq-fixed-len`"""

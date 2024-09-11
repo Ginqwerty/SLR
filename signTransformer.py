@@ -34,30 +34,15 @@ class AddNorm(nn.Module):
 
 ############################################################
 # Encoder ##################################################
-class TransformerEncoderBlock(nn.Module):
-    """The Transformer encoder block."""
-    def __init__(self, num_hiddens, ffn_num_hiddens, num_heads, dropout,
-                 use_bias=False):
-        super().__init__()
-        self.attention = d2l.MultiHeadAttention(num_hiddens, num_heads,
-                                                dropout, use_bias)
-        self.addnorm1 = AddNorm(num_hiddens, dropout)
-        self.ffn = PositionWiseFFN(ffn_num_hiddens, num_hiddens)
-        self.addnorm2 = AddNorm(num_hiddens, dropout)
-
-    def forward(self, X, valid_lens):
-        Y = self.addnorm1(X, self.attention(X, X, X, valid_lens))
-        return self.addnorm2(Y, self.ffn(Y))
-
 class TransformerEncoder_NoEmbedding(d2l.Encoder):
     def __init__(self, num_hiddens, ffn_num_hiddens,
                  num_heads, num_blks, dropout, use_bias=False):
         super().__init__()
         self.num_hiddens = num_hiddens
         self.ffn_num_hiddens = ffn_num_hiddens
-        # self.projection = nn.Linear(25, num_hiddens)
+        self.projection = nn.Linear(768, num_hiddens)
         self.input_dim = None  # Placeholder for input dimension
-        self.projection = None  # Initialize projection as None
+        # self.projection = None  # Initialize projection as None
         self.pos_encoding = d2l.PositionalEncoding(num_hiddens, dropout)
         self.blks = nn.Sequential()
         for i in range(num_blks):
@@ -65,31 +50,33 @@ class TransformerEncoder_NoEmbedding(d2l.Encoder):
                 num_hiddens, ffn_num_hiddens, num_heads, dropout, use_bias))
 
     def forward(self, X, valid_lens):
-        # Skip embedding if you're using features
         device = X.device  # Ensure to get the device from X
-        #print("the X's device is :", device)
+        print("the X's device is :", device)
 
+        # Skip embedding if you're using features
         if self.input_dim is None:
             self.input_dim = X.shape[-1]  # Set input_dim from input tensor
-            self.projection = nn.Linear(self.input_dim, self.num_hiddens).to(device)  # Reinitialize projection
+        #     self.projection = nn.Linear(self.input_dim, self.num_hiddens).to(device)  # Reinitialize projection
 
-        #print(f"Input shape: {X.shape}")  # Print input shape
+        # print(f"Input shape: {X.shape}")  # Print input shape
         # print(f"X values before projection: {X}")
-        #print(f"X dtype before projection: {X.dtype}")
-        #print("num_hiddens: ", self.num_hiddens)
-        #print("input_dim: ", self.input_dim)
-        #print("ffn_num_hiddens: ", self.ffn_num_hiddens)
+        # print(f"X dtype before projection: {X.dtype}")
+        # print("num_hiddens: ", self.num_hiddens)
+        # print("input_dim: ", self.input_dim)
+        # print("ffn_num_hiddens: ", self.ffn_num_hiddens)
+        # Before moving to device
 
         # projection = nn.Linear(self.input_dim, self.num_hiddens)
-        X = self.projection(X)  # Project the feature dimension to num_hiddens
-        #print("Projection device:", self.projection.weight.device)
-        #print("X device after projection:", X.device)
-        #print(f"Input shape after projection: {X.shape}")  # Print input shape after projection
+        X = self.projection(X).to(device)  # Project the feature dimension to num_hiddens
+        print(f"Input shape after projection: {X.shape}")  # Print input shape after projection
+
+        # After moving to device
+        print(f"After projection layer, the X's device: {X.device}")
 
         X = self.pos_encoding(X * math.sqrt(self.num_hiddens)).to(device)
         self.attention_weights = [None] * len(self.blks)
         for i, blk in enumerate(self.blks):
-            X = blk(X, valid_lens)
+            X = blk(X.to(device), valid_lens)
             self.attention_weights[
                 i] = blk.attention.attention.attention_weights
         return X
@@ -520,7 +507,7 @@ torch.save(signmodel.state_dict(), full_save_path)
 #torch.save(signmodel.state_dict(), '/home/jiayu/ParkVehicle/SLR_back/savedModel')
 
 #print(trainer.train_losses)
-torch.cuda.empty_cache()  # Clear cache
+# torch.cuda.empty_cache()  # Clear cache
 '''
 Predict
 '''

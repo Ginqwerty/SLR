@@ -36,9 +36,17 @@ def save_translations_to_file(translations, output_file_path):
 # 主函数
 if __name__ == '__main__':
     # 文件路径
-    folder_names_file = '/Users/yimingni/Desktop/ASL Project/SLR/processing_training.txt'  # 文件夹名字顺序文件路径
-    csv_file_path = '/Users/yimingni/Desktop/ASL Project/SLR/PHOENIX-2014-T-release-v3/PHOENIX-2014-T/annotations/manual/PHOENIX-2014-T.train.corpus.csv'      # CSV文件路径
-    output_file_path = '/Users/yimingni/Desktop/ASL Project/SLR/trainingTranslation.txt'  # 保存提取翻译的路径
+    # folder_names_file = '/Users/yimingni/Desktop/ASL Project/SLR/processing_training.txt'  # 文件夹名字顺序文件路径
+    # csv_file_path = '/Users/yimingni/Desktop/ASL Project/SLR/PHOENIX-2014-T-release-v3/PHOENIX-2014-T/annotations/manual/PHOENIX-2014-T.train.corpus.csv'      # CSV文件路径
+    # output_file_path = '/Users/yimingni/Desktop/ASL Project/SLR/trainingTranslation.txt'  # 保存提取翻译的路径
+
+    # folder_names_file = '/Users/yimingni/Desktop/ASL Project/SLR/processed_folders_testingGPU.txt'  # 文件夹名字顺序文件路径
+    # csv_file_path = '/Users/yimingni/Desktop/ASL Project/SLR/PHOENIX-2014-T-release-v3/PHOENIX-2014-T/annotations/manual/PHOENIX-2014-T.test.corpus.csv'      # CSV文件路径
+    # output_file_path = '/Users/yimingni/Desktop/ASL Project/SLR/testingTranslation.txt'  # 保存提取翻译的路径
+
+    folder_names_file = '/Users/yimingni/Desktop/ASL Project/SLR/processed_folders_devingGPU.txt'  # 文件夹名字顺序文件路径
+    csv_file_path = '/Users/yimingni/Desktop/ASL Project/SLR/PHOENIX-2014-T-release-v3/PHOENIX-2014-T/annotations/manual/PHOENIX-2014-T.dev.corpus.csv'      # CSV文件路径
+    output_file_path = '/Users/yimingni/Desktop/ASL Project/SLR/devingTranslation.txt'  # 保存提取翻译的路径
 
     # 读取文件夹名字和CSV数据
     folder_names = read_folder_names(folder_names_file)
