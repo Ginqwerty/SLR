@@ -516,6 +516,9 @@ for name, param in signmodel.named_parameters():
 #testing_features_dir = '/home/streetparking/SLR/paddedTestingVideoFeaturesGPU'
 #testing_translation_file = '/home/streetparking/SLR/testingTranslation.txt'
 
+testing_features_dir = '/home/streetparking/SLR/paddedDevingVideoFeaturesGPU'
+testing_translation_file = '/home/streetparking/SLR/devingTranslation.txt'
+
 def print_gpu_memory():
     if torch.cuda.is_available():
         print(f"Allocated memory: {torch.cuda.memory_allocated() / 1024**3:.2f} GB")
@@ -523,24 +526,25 @@ def print_gpu_memory():
 	# 显示当前设备的空闲内存
         print(f"Free memory: {torch.cuda.memory_reserved() - torch.cuda.memory_allocated()} bytes")
 
-print_gpu_memory()
-#features, sentences = load_testing_features_and_sentences(testing_features_dir, testing_translation_file)
+
+features, sentences = load_testing_features_and_sentences(testing_features_dir, testing_translation_file)
 #print("loaded sentences: ", sentences[0])
-# sign1 = features[0].to(device) # make sure the prediction feature are all in GPU
+sign1 = features[0].to(device) # make sure the prediction feature are all in GPU
 # sign2 = features[1].to(device)
 # sign3 = features[2].to(device)
 # sign4 = features[3].to(device)
 # sign5 = features[4].to(device)
 
-#print("sign 1 feature: ", sign1)
-# signs = [sign1, sign2, sign3, sign4, sign5]
+print("sign 1 feature: ", sign1.shape)
+print_gpu_memory()
+signs = [sign1]
 #signs = [features[0], features[1], features[2], features[3], features[4]]
 # engs = ['liebe zuschauer guten abend', 'heftiger wintereinbruch gestern in nordirland schottland', 'schwere überschwemmungen in den usa', 'weiterhin warm am östlichen mittelmeer und auch richtung westliches mittelmeer ganz west und nordeuropa bleibt kühl', 'und sehr kühl wird auch die kommende nacht']
-#engs = [sentences[0], sentences[1], sentences[2], sentences[3], sentences[4]]
-# preds, _ = signmodel.predict_step(
+engs = [sentences[0]]
+#preds, _ = signmodel.predict_step(
 #     # signdata.build(signs, engs), d2l.cpu(), signdata.num_steps)
 #    signdata.build(signs, engs), d2l.try_gpu(), signdata.num_steps)
-# for sign, eng, p in zip(signs, engs, preds):
+#for sign, eng, p in zip(signs, engs, preds):
 #    translation = []
 #    for token in signdata.tgt_vocab.to_tokens(p):
 #        if token == '<eos>':
