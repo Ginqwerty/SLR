@@ -462,17 +462,17 @@ def load_testing_features_and_sentences(features_dir, sentences_file):
 '''
 Build Model 
 '''
-batch_size = 16
+batch_size = 8
 num_steps = 9
 num_train = 512
 num_val = 128
-features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
-# features_dir = '/home/streetparking/SLR/paddedTrainingVideoFeaturesGPU'
-#features_dir = '/home/streetparking/SLR/paddedTrainAndDevFeaturesGPU'
+#features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
+#features_dir = '/home/streetparking/SLR/paddedTrainingVideoFeaturesGPU'
+features_dir = '/home/streetparking/SLR/paddedDevingVideoFeaturesGPU'
 
-sentences_file = '/home/streetparking/SLR/germen_sentences.txt'
-# sentences_file = '/home/streetparking/SLR/trainingTranslation.txt'
-#sentences_file = '/home/streetparking/SLR/trainDevTranslation.txt'
+#sentences_file = '/home/streetparking/SLR/germen_sentences.txt'
+#sentences_file = '/home/streetparking/SLR/trainingTranslation.txt'
+sentences_file = '/home/streetparking/SLR/devingTranslation.txt'
  
 signdata = signEng(batch_size=batch_size, num_steps=num_steps, num_train=num_train, num_val=num_val,
                 features_dir=features_dir, sentences_file=sentences_file)
@@ -507,8 +507,8 @@ for name, param in signmodel.named_parameters():
 
 # print('check device: ', device)
 
-testing_features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
-testing_translation_file = '/home/streetparking/SLR/germen_sentences.txt'
+#testing_features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
+#testing_translation_file = '/home/streetparking/SLR/germen_sentences.txt'
 
 #testing_features_dir = '/home/streetparking/SLR/paddedTestingVideoFeaturesGPU'
 #testing_translation_file = '/home/streetparking/SLR/testingTranslation.txt'
@@ -520,9 +520,9 @@ def print_gpu_memory():
     if torch.cuda.is_available():
         print(f"Allocated memory: {torch.cuda.memory_allocated() / 1024**3:.2f} GB")
         print(f"Cached memory: {torch.cuda.memory_reserved() / 1024**3:.2f} GB")
-
-features, sentences = load_testing_features_and_sentences(testing_features_dir, testing_translation_file)
-print("loaded sentences: ", sentences[0])
+print_gpu_memory()
+#features, sentences = load_testing_features_and_sentences(testing_features_dir, testing_translation_file)
+#print("loaded sentences: ", sentences[0])
 # sign1 = features[0].to(device) # make sure the prediction feature are all in GPU
 # sign2 = features[1].to(device)
 # sign3 = features[2].to(device)
