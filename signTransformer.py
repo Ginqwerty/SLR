@@ -498,7 +498,7 @@ signmodel.to(device)
 print('check device: ', device)
 
 #trainer = d2l.Trainer(max_epochs=20, gradient_clip_val=1, num_gpus=1)
-trainer = Trainer(max_epochs=20, gradient_clip_val=1, num_gpus=1) #Using self-Training which could store loss value
+trainer = Trainer(max_epochs=1, gradient_clip_val=1, num_gpus=1) #Using self-Training which could store loss value
 
 '''
 Fit the sign data to model

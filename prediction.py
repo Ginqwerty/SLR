@@ -467,12 +467,12 @@ num_steps = 9
 num_train = 512
 num_val = 128
 #features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
-#features_dir = '/home/streetparking/SLR/paddedTrainingVideoFeaturesGPU'
-features_dir = '/home/streetparking/SLR/paddedDevingVideoFeaturesGPU'
+features_dir = '/home/streetparking/SLR/paddedTrainingVideoFeaturesGPU'
+#features_dir = '/home/streetparking/SLR/paddedDevingVideoFeaturesGPU'
 
 #sentences_file = '/home/streetparking/SLR/germen_sentences.txt'
-#sentences_file = '/home/streetparking/SLR/trainingTranslation.txt'
-sentences_file = '/home/streetparking/SLR/devingTranslation.txt'
+sentences_file = '/home/streetparking/SLR/trainingTranslation.txt'
+#sentences_file = '/home/streetparking/SLR/devingTranslation.txt'
  
 signdata = signEng(batch_size=batch_size, num_steps=num_steps, num_train=num_train, num_val=num_val,
                 features_dir=features_dir, sentences_file=sentences_file)
@@ -493,7 +493,7 @@ signmodel = d2l.Seq2Seq(encoder, decoder, tgt_pad=signdata.tgt_vocab['<pad>'],
 '''
 Predict
 '''
-save_path = '/home/streetparking/SLR/savedModel/0904_256_6_02_128_4.pth'
+save_path = '/home/streetparking/SLR/savedModel/0916_256_4_0.2_2048_4.pth'
 signmodel.load_state_dict(torch.load(save_path, weights_only=True))
 
 if torch.cuda.is_available():
@@ -520,6 +520,9 @@ def print_gpu_memory():
     if torch.cuda.is_available():
         print(f"Allocated memory: {torch.cuda.memory_allocated() / 1024**3:.2f} GB")
         print(f"Cached memory: {torch.cuda.memory_reserved() / 1024**3:.2f} GB")
+	# 显示当前设备的空闲内存
+        print(f"Free memory: {torch.cuda.memory_reserved() - torch.cuda.memory_allocated()} bytes")
+
 print_gpu_memory()
 #features, sentences = load_testing_features_and_sentences(testing_features_dir, testing_translation_file)
 #print("loaded sentences: ", sentences[0])
