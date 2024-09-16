@@ -513,30 +513,38 @@ testing_translation_file = '/home/streetparking/SLR/germen_sentences.txt'
 #testing_features_dir = '/home/streetparking/SLR/paddedTestingVideoFeaturesGPU'
 #testing_translation_file = '/home/streetparking/SLR/testingTranslation.txt'
 
-features, sentences = signdata._load_features_and_sentences(testing_features_dir, testing_translation_file)
+#testing_features_dir = '/home/streetparking/SLR/paddedTestingVideoFeaturesGPU'
+#testing_translation_file = '/home/streetparking/SLR/testingTranslation.txt'
+
+def print_gpu_memory():
+    if torch.cuda.is_available():
+        print(f"Allocated memory: {torch.cuda.memory_allocated() / 1024**3:.2f} GB")
+        print(f"Cached memory: {torch.cuda.memory_reserved() / 1024**3:.2f} GB")
+
+features, sentences = load_testing_features_and_sentences(testing_features_dir, testing_translation_file)
 print("loaded sentences: ", sentences[0])
-sign1 = features[0].to(device) # make sure the prediction feature are all in GPU
-sign2 = features[1].to(device)
-sign3 = features[2].to(device)
-sign4 = features[3].to(device)
-sign5 = features[4].to(device)
+# sign1 = features[0].to(device) # make sure the prediction feature are all in GPU
+# sign2 = features[1].to(device)
+# sign3 = features[2].to(device)
+# sign4 = features[3].to(device)
+# sign5 = features[4].to(device)
 
 #print("sign 1 feature: ", sign1)
-signs = [sign1, sign2, sign3, sign4, sign5]
+# signs = [sign1, sign2, sign3, sign4, sign5]
 #signs = [features[0], features[1], features[2], features[3], features[4]]
-engs = ['liebe zuschauer guten abend', 'heftiger wintereinbruch gestern in nordirland schottland', 'schwere überschwemmungen in den usa', 'weiterhin warm am östlichen mittelmeer und auch richtung westliches mittelmeer ganz west und nordeuropa bleibt kühl', 'und sehr kühl wird auch die kommende nacht']
+# engs = ['liebe zuschauer guten abend', 'heftiger wintereinbruch gestern in nordirland schottland', 'schwere überschwemmungen in den usa', 'weiterhin warm am östlichen mittelmeer und auch richtung westliches mittelmeer ganz west und nordeuropa bleibt kühl', 'und sehr kühl wird auch die kommende nacht']
 #engs = [sentences[0], sentences[1], sentences[2], sentences[3], sentences[4]]
-preds, _ = signmodel.predict_step(
-    # signdata.build(signs, engs), d2l.cpu(), signdata.num_steps)
-   signdata.build(signs, engs), d2l.try_gpu(), signdata.num_steps)
-for sign, eng, p in zip(signs, engs, preds):
-   translation = []
-   for token in signdata.tgt_vocab.to_tokens(p):
-       if token == '<eos>':
-           break
-       translation.append(token)
-   print(f'{sign} => {translation}, bleu,'
-         f'{d2l.bleu(" ".join(translation), eng, k=2):.3f}')
+# preds, _ = signmodel.predict_step(
+#     # signdata.build(signs, engs), d2l.cpu(), signdata.num_steps)
+#    signdata.build(signs, engs), d2l.try_gpu(), signdata.num_steps)
+# for sign, eng, p in zip(signs, engs, preds):
+#    translation = []
+#    for token in signdata.tgt_vocab.to_tokens(p):
+#        if token == '<eos>':
+#            break
+#        translation.append(token)
+#    print(f'{sign} => {translation}, bleu,'
+#          f'{d2l.bleu(" ".join(translation), eng, k=2):.3f}')
 
 # 打印模型的部分权重
 #for name, param in testsignmodel.named_parameters():
