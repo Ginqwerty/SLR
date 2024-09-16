@@ -66,7 +66,7 @@ class TransformerEncoder_NoEmbedding(d2l.Encoder):
 
     def forward(self, X, valid_lens):
         device = X.device  # Ensure to get the device from X
-        print("the X's device is :", device)
+        #print("the X's device is :", device)
 
         # Skip embedding if you're using features
         if self.input_dim is None:
@@ -83,10 +83,10 @@ class TransformerEncoder_NoEmbedding(d2l.Encoder):
 
         # projection = nn.Linear(self.input_dim, self.num_hiddens)
         X = self.projection(X).to(device)  # Project the feature dimension to num_hiddens
-        print(f"Input shape after projection: {X.shape}")  # Print input shape after projection
+        #print(f"Input shape after projection: {X.shape}")  # Print input shape after projection
 
         # After moving to device
-        print(f"After projection layer, the X's device: {X.device}")
+        #print(f"After projection layer, the X's device: {X.device}")
 
         X = self.pos_encoding(X * math.sqrt(self.num_hiddens)).to(device)
         self.attention_weights = [None] * len(self.blks)
@@ -378,7 +378,7 @@ class Trainer(d2l.HyperParameters):
             for batch in self.train_dataloader:
                 loss = self.model.training_step(self.prepare_batch(batch))
                 self.train_losses.append(loss.item())  # 记录训练损失
-                #print("training loss.item(): ", loss.item())
+                print("training loss.item(): ", loss.item())
                 self.optim.zero_grad()
                 with torch.no_grad():
                     loss.backward()
@@ -462,18 +462,20 @@ def load_testing_features_and_sentences(features_dir, sentences_file):
 '''
 Build Model 
 '''
-batch_size = 16
+batch_size = 8
 num_steps = 9
 num_train = 6600
 num_val = 496
 #features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
 features_dir = '/home/streetparking/SLR/paddedTrainingVideoFeaturesGPU'
-#features_dir = '/home/streetparking/SLR/paddedTrainAndDevFeaturesGPU'
+#features_dir = '/home/streetparking/SLR/paddedDevingVideoFeaturesGPU'
+#features_dir = './paddedTestingVideoFeaturesGPU'
 
 #sentences_file = '/home/streetparking/SLR/germen_sentences.txt'
 sentences_file = '/home/streetparking/SLR/trainingTranslation.txt'
-#sentences_file = '/home/streetparking/SLR/trainDevTranslation.txt'
- 
+#sentences_file = '/home/streetparking/SLR/devingTranslation.txt'
+#sentences_file = './testingTranslation.txt'
+
 signdata = signEng(batch_size=batch_size, num_steps=num_steps, num_train=num_train, num_val=num_val,
                 features_dir=features_dir, sentences_file=sentences_file)
 num_hiddens, num_blks, dropout = 256, 4, 0.2 # Should Adjust based on the performance
@@ -496,7 +498,7 @@ signmodel.to(device)
 print('check device: ', device)
 
 #trainer = d2l.Trainer(max_epochs=20, gradient_clip_val=1, num_gpus=1)
-trainer = Trainer(max_epochs=1, gradient_clip_val=1, num_gpus=1) #Using self-Training which could store loss value
+trainer = Trainer(max_epochs=20, gradient_clip_val=1, num_gpus=1) #Using self-Training which could store loss value
 
 '''
 Fit the sign data to model
@@ -510,7 +512,7 @@ Save the model status dictionary
 #save_dir = os.path.dirname(save_path)
 # 格式化保存路径
 save_path = '/home/streetparking/SLR/savedModel/'
-file_name = f'0910_{num_hiddens}_{num_blks}_{dropout}_{ffn_num_hiddens}_{num_heads}.pth'
+file_name = f'0916_{num_hiddens}_{num_blks}_{dropout}_{ffn_num_hiddens}_{num_heads}.pth'
 full_save_path = os.path.join(save_path, file_name)
 
 # 打印最终的保存路径
