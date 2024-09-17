@@ -322,7 +322,8 @@ class signEng(d2l.DataModule):
 
     def build(self, src_sentences, tgt_sentences):
         """Build arrays with frame features and English sentences."""
-        features, sentences = self._load_features_and_sentences(self.features_dir, self.sentences_file)
+        # features, sentences = self._load_features_and_sentences(self.features_dir, self.sentences_file)
+        sentences_str = "\n".join(tgt_sentences).strip()
         arrays, _, _ = self._build_arrays(features, sentences)
         return arrays
 
@@ -453,7 +454,7 @@ def load_testing_features_and_sentences(features_dir, sentences_file):
 
     # Load English sentences from text file as a single string
     with open(sentences_file, 'r', encoding='utf-8') as f:
-        sentences = f.read().strip().split('\n')  # Read as a single string
+        sentences = f.read().splitlines()   # Read as a single string
 
     return features, sentences
 
@@ -477,7 +478,7 @@ sentences_file = '/home/streetparking/SLR/devingTranslation.txt'
 signdata = signEng(batch_size=batch_size, num_steps=num_steps, num_train=num_train, num_val=num_val,
                 features_dir=features_dir, sentences_file=sentences_file)
 num_hiddens, num_blks, dropout = 256, 4, 0.2 # Should Adjust based on the performance
-ffn_num_hiddens, num_heads = 2048, 4
+ffn_num_hiddens, num_heads = 64, 4
 encoder = TransformerEncoder_NoEmbedding(
     num_hiddens, ffn_num_hiddens, num_heads,
     num_blks, dropout)
@@ -507,8 +508,8 @@ for name, param in signmodel.named_parameters():
 
 # print('check device: ', device)
 
-#testing_features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
-#testing_translation_file = '/home/streetparking/SLR/germen_sentences.txt'
+testing_features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
+testing_translation_file = '/home/streetparking/SLR/germen_sentences.txt'
 
 #testing_features_dir = '/home/streetparking/SLR/paddedTestingVideoFeaturesGPU'
 #testing_translation_file = '/home/streetparking/SLR/testingTranslation.txt'
@@ -516,11 +517,18 @@ for name, param in signmodel.named_parameters():
 #testing_features_dir = '/home/streetparking/SLR/paddedTestingVideoFeaturesGPU'
 #testing_translation_file = '/home/streetparking/SLR/testingTranslation.txt'
 
-def print_gpu_memory():
-    if torch.cuda.is_available():
-        print(f"Allocated memory: {torch.cuda.memory_allocated() / 1024**3:.2f} GB")
-        print(f"Cached memory: {torch.cuda.memory_reserved() / 1024**3:.2f} GB")
-print_gpu_memory()
+loaded_signs, loaded_gers = load_testing_features_and_sentences(testing_features_dir, testing_translation_file)
+preds, _ = signmodel.predict_step(
+    signdata.build(loaded_signs, loaded_gers), d2l.try_gpu(), signdata.num_steps)
+for sign, ger, p in zip(loaded_signs, loaded_gers, preds):
+    translation = []
+    for token in signdata.tgt_vocab.to_tokens(p):
+        if token == '<eos>':
+            break
+        translation.append(token)
+    print(f'{sign} => {translation}, bleu,'
+          f'{d2l.bleu(" ".join(translation), ger, k=2):.3f}')
+
 #features, sentences = load_testing_features_and_sentences(testing_features_dir, testing_translation_file)
 #print("loaded sentences: ", sentences[0])
 # sign1 = features[0].to(device) # make sure the prediction feature are all in GPU
@@ -546,22 +554,4 @@ print_gpu_memory()
 #    print(f'{sign} => {translation}, bleu,'
 #          f'{d2l.bleu(" ".join(translation), eng, k=2):.3f}')
 
-# 打印模型的部分权重
-#for name, param in testsignmodel.named_parameters():
-#    print(name, param.data)
 
-
-# 预测
-#signs = features
-#gers = sentences
-#preds, _ = testsignmodel.predict_step(
-    #signdata.build(signs, engs), d2l.cpu(), signdata.num_steps)
-#    signdata.build(signs, gers), d2l.try_gpu(), signdata.num_steps)
-#for sign, ger, p in zip(signs, gers, preds):
-#    translation = []
-#    for token in signdata.tgt_vocab.to_tokens(p):
-#        if token == '<eos>':
-#            break
-#        translation.append(token)
-#    print(f'{sign} => {translation}, bleu,'
-#          f'{d2l.bleu(" ".join(translation), eng, k=2):.3f}')
