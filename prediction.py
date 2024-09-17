@@ -322,7 +322,8 @@ class signEng(d2l.DataModule):
 
     def build(self, src_sentences, tgt_sentences):
         """Build arrays with frame features and English sentences."""
-        features, sentences = self._load_features_and_sentences(self.features_dir, self.sentences_file)
+        # features, sentences = self._load_features_and_sentences(self.features_dir, self.sentences_file)
+        sentences_str = "\n".join(tgt_sentences).strip()
         arrays, _, _ = self._build_arrays(features, sentences)
         return arrays
 
@@ -453,7 +454,7 @@ def load_testing_features_and_sentences(features_dir, sentences_file):
 
     # Load English sentences from text file as a single string
     with open(sentences_file, 'r', encoding='utf-8') as f:
-        sentences = f.read().strip().split('\n')  # Read as a single string
+        sentences = f.read().splitlines()   # Read as a single string
 
     return features, sentences
 
@@ -477,7 +478,7 @@ sentences_file = '/home/streetparking/SLR/trainingTranslation.txt'
 signdata = signEng(batch_size=batch_size, num_steps=num_steps, num_train=num_train, num_val=num_val,
                 features_dir=features_dir, sentences_file=sentences_file)
 num_hiddens, num_blks, dropout = 256, 4, 0.2 # Should Adjust based on the performance
-ffn_num_hiddens, num_heads = 2048, 4
+ffn_num_hiddens, num_heads = 64, 4
 encoder = TransformerEncoder_NoEmbedding(
     num_hiddens, ffn_num_hiddens, num_heads,
     num_blks, dropout)
@@ -493,7 +494,7 @@ signmodel = d2l.Seq2Seq(encoder, decoder, tgt_pad=signdata.tgt_vocab['<pad>'],
 '''
 Predict
 '''
-save_path = '/home/streetparking/SLR/savedModel/0916_256_4_0.2_2048_4.pth'
+save_path = '/home/streetparking/SLR/savedModel/0904_256_6_02_128_4.pth'
 signmodel.load_state_dict(torch.load(save_path, weights_only=True))
 
 if torch.cuda.is_available():
@@ -507,8 +508,8 @@ for name, param in signmodel.named_parameters():
 
 # print('check device: ', device)
 
-#testing_features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
-#testing_translation_file = '/home/streetparking/SLR/germen_sentences.txt'
+testing_features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
+testing_translation_file = '/home/streetparking/SLR/germen_sentences.txt'
 
 #testing_features_dir = '/home/streetparking/SLR/paddedTestingVideoFeaturesGPU'
 #testing_translation_file = '/home/streetparking/SLR/testingTranslation.txt'
@@ -516,35 +517,35 @@ for name, param in signmodel.named_parameters():
 #testing_features_dir = '/home/streetparking/SLR/paddedTestingVideoFeaturesGPU'
 #testing_translation_file = '/home/streetparking/SLR/testingTranslation.txt'
 
-testing_features_dir = '/home/streetparking/SLR/paddedDevingVideoFeaturesGPU'
-testing_translation_file = '/home/streetparking/SLR/devingTranslation.txt'
+loaded_signs, loaded_gers = load_testing_features_and_sentences(testing_features_dir, testing_translation_file)
+preds, _ = signmodel.predict_step(
+    signdata.build(loaded_signs, loaded_gers), d2l.try_gpu(), signdata.num_steps)
+for sign, ger, p in zip(loaded_signs, loaded_gers, preds):
+    translation = []
+    for token in signdata.tgt_vocab.to_tokens(p):
+        if token == '<eos>':
+            break
+        translation.append(token)
+    print(f'{sign} => {translation}, bleu,'
+          f'{d2l.bleu(" ".join(translation), ger, k=2):.3f}')
 
-def print_gpu_memory():
-    if torch.cuda.is_available():
-        print(f"Allocated memory: {torch.cuda.memory_allocated() / 1024**3:.2f} GB")
-        print(f"Cached memory: {torch.cuda.memory_reserved() / 1024**3:.2f} GB")
-	# 显示当前设备的空闲内存
-        print(f"Free memory: {torch.cuda.memory_reserved() - torch.cuda.memory_allocated()} bytes")
-
-
-features, sentences = load_testing_features_and_sentences(testing_features_dir, testing_translation_file)
+#features, sentences = load_testing_features_and_sentences(testing_features_dir, testing_translation_file)
 #print("loaded sentences: ", sentences[0])
-sign1 = features[0].to(device) # make sure the prediction feature are all in GPU
+# sign1 = features[0].to(device) # make sure the prediction feature are all in GPU
 # sign2 = features[1].to(device)
 # sign3 = features[2].to(device)
 # sign4 = features[3].to(device)
 # sign5 = features[4].to(device)
 
-print("sign 1 feature: ", sign1.shape)
-print_gpu_memory()
-signs = [sign1]
+#print("sign 1 feature: ", sign1)
+# signs = [sign1, sign2, sign3, sign4, sign5]
 #signs = [features[0], features[1], features[2], features[3], features[4]]
 # engs = ['liebe zuschauer guten abend', 'heftiger wintereinbruch gestern in nordirland schottland', 'schwere überschwemmungen in den usa', 'weiterhin warm am östlichen mittelmeer und auch richtung westliches mittelmeer ganz west und nordeuropa bleibt kühl', 'und sehr kühl wird auch die kommende nacht']
-engs = [sentences[0]]
-#preds, _ = signmodel.predict_step(
+#engs = [sentences[0], sentences[1], sentences[2], sentences[3], sentences[4]]
+# preds, _ = signmodel.predict_step(
 #     # signdata.build(signs, engs), d2l.cpu(), signdata.num_steps)
 #    signdata.build(signs, engs), d2l.try_gpu(), signdata.num_steps)
-#for sign, eng, p in zip(signs, engs, preds):
+# for sign, eng, p in zip(signs, engs, preds):
 #    translation = []
 #    for token in signdata.tgt_vocab.to_tokens(p):
 #        if token == '<eos>':
@@ -553,22 +554,3 @@ engs = [sentences[0]]
 #    print(f'{sign} => {translation}, bleu,'
 #          f'{d2l.bleu(" ".join(translation), eng, k=2):.3f}')
 
-# 打印模型的部分权重
-#for name, param in testsignmodel.named_parameters():
-#    print(name, param.data)
-
-
-# 预测
-#signs = features
-#gers = sentences
-#preds, _ = testsignmodel.predict_step(
-    #signdata.build(signs, engs), d2l.cpu(), signdata.num_steps)
-#    signdata.build(signs, gers), d2l.try_gpu(), signdata.num_steps)
-#for sign, ger, p in zip(signs, gers, preds):
-#    translation = []
-#    for token in signdata.tgt_vocab.to_tokens(p):
-#        if token == '<eos>':
-#            break
-#        translation.append(token)
-#    print(f'{sign} => {translation}, bleu,'
-#          f'{d2l.bleu(" ".join(translation), eng, k=2):.3f}')
