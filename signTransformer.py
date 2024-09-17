@@ -320,7 +320,7 @@ class signEng(d2l.DataModule):
             print(f"Batch: {batch}")
             break  # Inspect the first batch
 
-    def build(self, src_sentences, tgt_sentences):
+    def build(self, src_features, tgt_sentences):
         """Build arrays with frame features and English sentences."""
         # features, sentences = self._load_features_and_sentences(self.features_dir, self.sentences_file)
         sentences_str = "\n".join(tgt_sentences).strip()
