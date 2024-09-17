@@ -554,4 +554,3 @@ for sign, ger, p in zip(loaded_signs, loaded_gers, preds):
 #    print(f'{sign} => {translation}, bleu,'
 #          f'{d2l.bleu(" ".join(translation), eng, k=2):.3f}')
 
-
