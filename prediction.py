@@ -324,7 +324,7 @@ class signEng(d2l.DataModule):
         """Build arrays with frame features and English sentences."""
         # features, sentences = self._load_features_and_sentences(self.features_dir, self.sentences_file)
         sentences_str = "\n".join(tgt_sentences).strip()
-        arrays, _, _ = self._build_arrays(features, sentences)
+        arrays, _, _ = self._build_arrays(src_features, sentences_str)
         return arrays
 
 ############################################################
@@ -494,7 +494,7 @@ signmodel = d2l.Seq2Seq(encoder, decoder, tgt_pad=signdata.tgt_vocab['<pad>'],
 '''
 Predict
 '''
-save_path = '/home/streetparking/SLR/savedModel/0904_256_6_02_128_4.pth'
+save_path = '/home/streetparking/SLR/savedModel/0917_256_4_0.2_64_4.pth'
 signmodel.load_state_dict(torch.load(save_path, weights_only=True))
 
 if torch.cuda.is_available():

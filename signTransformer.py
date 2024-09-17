@@ -324,7 +324,7 @@ class signEng(d2l.DataModule):
         """Build arrays with frame features and English sentences."""
         # features, sentences = self._load_features_and_sentences(self.features_dir, self.sentences_file)
         sentences_str = "\n".join(tgt_sentences).strip()
-        arrays, _, _ = self._build_arrays(features, sentences)
+        arrays, _, _ = self._build_arrays(src_features, sentences_str)
         return arrays
 
 ############################################################
