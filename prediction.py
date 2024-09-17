@@ -468,12 +468,12 @@ num_steps = 9
 num_train = 512
 num_val = 128
 #features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
-#features_dir = '/home/streetparking/SLR/paddedTrainingVideoFeaturesGPU'
-features_dir = '/home/streetparking/SLR/paddedDevingVideoFeaturesGPU'
+features_dir = '/home/streetparking/SLR/paddedTrainingVideoFeaturesGPU'
+#features_dir = '/home/streetparking/SLR/paddedDevingVideoFeaturesGPU'
 
 #sentences_file = '/home/streetparking/SLR/germen_sentences.txt'
-#sentences_file = '/home/streetparking/SLR/trainingTranslation.txt'
-sentences_file = '/home/streetparking/SLR/devingTranslation.txt'
+sentences_file = '/home/streetparking/SLR/trainingTranslation.txt'
+#sentences_file = '/home/streetparking/SLR/devingTranslation.txt'
  
 signdata = signEng(batch_size=batch_size, num_steps=num_steps, num_train=num_train, num_val=num_val,
                 features_dir=features_dir, sentences_file=sentences_file)
@@ -553,5 +553,4 @@ for sign, ger, p in zip(loaded_signs, loaded_gers, preds):
 #        translation.append(token)
 #    print(f'{sign} => {translation}, bleu,'
 #          f'{d2l.bleu(" ".join(translation), eng, k=2):.3f}')
-
 
