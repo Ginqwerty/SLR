@@ -281,7 +281,7 @@ class signEng(d2l.DataModule):
             valid_length = non_zero_rows.sum().item()
             # print("未 padding 之前的长度: ", valid_length)
             src_valid_len.append(valid_length)
-            print("sentence valid_len: ", valid_len)
+            # print("sentence valid_len: ", valid_len)
 
             # src_valid_len.append(len(f))
             if len(f) < max_len:
@@ -470,10 +470,10 @@ def load_testing_features_and_sentences(features_dir, sentences_file):
 '''
 Build Model 
 '''
-batch_size = 8
-num_steps = 9
-num_train = 512
-num_val = 128
+batch_size = 16
+num_steps = 52
+num_train = 6600
+num_val = 496
 #features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
 features_dir = '/home/streetparking/SLR/paddedTrainingVideoFeaturesGPU'
 #features_dir = '/home/streetparking/SLR/paddedDevingVideoFeaturesGPU'
@@ -484,8 +484,8 @@ sentences_file = '/home/streetparking/SLR/trainingTranslation.txt'
  
 signdata = signEng(batch_size=batch_size, num_steps=num_steps, num_train=num_train, num_val=num_val,
                 features_dir=features_dir, sentences_file=sentences_file)
-num_hiddens, num_blks, dropout = 256, 4, 0.2 # Should Adjust based on the performance
-ffn_num_hiddens, num_heads = 64, 4
+num_hiddens, num_blks, dropout = 512, 4, 0.2 # Should Adjust based on the performance
+ffn_num_hiddens, num_heads = 1028, 4
 encoder = TransformerEncoder_NoEmbedding(
     num_hiddens, ffn_num_hiddens, num_heads,
     num_blks, dropout)
