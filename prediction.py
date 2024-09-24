@@ -246,7 +246,7 @@ class signEng(d2l.DataModule):
             '''
             pad_or_trim = lambda seq, t: (
                 seq[:t] if len(seq) > t else seq + ['<pad>'] * (t - len(seq)))
-            sentences = [pad_or_trim(s, 9) for s in sentences]
+            sentences = [pad_or_trim(s, self.num_steps) for s in sentences]
             print("sentences.shape: ", len(sentences))
             #print("sentences[1]: ", sentences[1])
 
@@ -276,7 +276,14 @@ class signEng(d2l.DataModule):
         #print("feature_dim: ", feature_dim)
         features_padded = []
         for f in features:
-            src_valid_len.append(len(f))
+            # 计算未 padding 之前的长度
+            non_zero_rows = (f != 0).any(dim=1)
+            valid_length = non_zero_rows.sum().item()
+            # print("未 padding 之前的长度: ", valid_length)
+            src_valid_len.append(valid_length)
+            print("sentence valid_len: ", valid_len)
+
+            # src_valid_len.append(len(f))
             if len(f) < max_len:
                 padding = torch.zeros((max_len - len(f), feature_dim), dtype=f.dtype, device=f.device)
                 padded_feature = torch.cat([f, padding], dim=0)
@@ -293,7 +300,7 @@ class signEng(d2l.DataModule):
 
         tgt_array, tgt_vocab, _ = _build_array(tgt, tgt_vocab, True)
         src_array, src_vocab, src_valid_len = features_tensor, None, src_valid_len_tensor
-       
+        print("src_valid_len: ", src_valid_len)
         # 检查是否是相同类型
         #if src_valid_len.dtype == _.dtype:
         #    print("Both Tensors have the same data type")
@@ -302,7 +309,7 @@ class signEng(d2l.DataModule):
         #    print("src_valid_len.dtype: ", src_valid_len.dtype)
         #    print("_.dtype: ", _.dtype)
 	
- 	# Check src and tgt arraies have same length
+ 	    # Check src and tgt arraies have same length
         print("src_array_length: ", len(src_array))
         print("tgt_array_length: ", len(tgt_array))
         return ((src_array, tgt_array[:, :-1], src_valid_len, tgt_array[:, 1:]),
