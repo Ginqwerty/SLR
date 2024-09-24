@@ -501,7 +501,7 @@ signmodel = d2l.Seq2Seq(encoder, decoder, tgt_pad=signdata.tgt_vocab['<pad>'],
 '''
 Predict
 '''
-save_path = '/home/streetparking/SLR/savedModel/0917_256_4_0.2_64_4.pth'
+save_path = '/home/streetparking/SLR/savedModel/0924_512_4_0.2_1028_4.pth'
 signmodel.load_state_dict(torch.load(save_path, weights_only=True))
 
 if torch.cuda.is_available():
@@ -515,7 +515,10 @@ for name, param in signmodel.named_parameters():
 
 # print('check device: ', device)
 
-testing_features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
+#testing_features_dir = '/home/streetparking/SLR/NewPheonixSampleFeatures'
+#testing_translation_file = '/home/streetparking/SLR/germen_sentences.txt'
+
+testing_features_dir = './subpaddedTrainingVideoFeaturesGPU'
 testing_translation_file = '/home/streetparking/SLR/germen_sentences.txt'
 
 #testing_features_dir = '/home/streetparking/SLR/paddedTestingVideoFeaturesGPU'
